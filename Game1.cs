@@ -21,6 +21,7 @@ namespace Monogame_Part_2___Lists_and_Loops
         Texture2D backgroundTexture;
         List<Texture2D> planetTextures;
         List<Rectangle> rects;
+        List<float> opacities;
         int width, height;  
         Screen screen;
         SpriteFont spriteFont;
@@ -28,8 +29,9 @@ namespace Monogame_Part_2___Lists_and_Loops
         KeyboardState prevKeyboardState;
         MouseState mouseState;
         MouseState prevMouseState;
-        Texture2D mouseTexture;
+        Texture2D mouseTexture,hammerTex,laserTex,holeTex;
         Point mousePosition;
+        Rectangle mouseRect;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -75,12 +77,17 @@ namespace Monogame_Part_2___Lists_and_Loops
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             backgroundTexture = Content.Load<Texture2D>("space_background");
             planetTextures = new List<Texture2D>();
+            opacities = new List<float>();
             for (int i = 1; i < 14; i++)
             {
                 planetTextures.Add(Content.Load<Texture2D>("16-bit-planet" + i));
+                opacities.Add(1.0f);
             }
             spriteFont = Content.Load<SpriteFont>("SpriteFont");
             mouseTexture = Content.Load<Texture2D>("hammer");
+            hammerTex = Content.Load<Texture2D>("hammer");
+            laserTex = Content.Load<Texture2D>("laser_gun");
+            holeTex = Content.Load<Texture2D>("black_hole");
             // TODO: use this.Content to load your game content here
         }
 
@@ -107,17 +114,53 @@ namespace Monogame_Part_2___Lists_and_Loops
                 this.Window.Title = mouseState.ScrollWheelValue.ToString();
                 if (Math.Abs(mouseState.ScrollWheelValue%360) >= 0&& Math.Abs(mouseState.ScrollWheelValue % 360) <120)
                 {
-                    mouseTexture = Content.Load<Texture2D>("hammer");
+                    mouseTexture = hammerTex;
                 }
                 else if (Math.Abs(mouseState.ScrollWheelValue % 360) >= 120 && Math.Abs(mouseState.ScrollWheelValue % 360) < 240)
                 {
-                    mouseTexture = Content.Load<Texture2D>("laser_gun");
+                    mouseTexture = laserTex;
                 }
                 else if (Math.Abs(mouseState.ScrollWheelValue % 360) >= 240 && Math.Abs(mouseState.ScrollWheelValue % 360) < 360)
                 {
-                    mouseTexture = Content.Load<Texture2D>("black_hole");
+                    mouseTexture = holeTex;
                 }
                 mousePosition = mouseState.Position;
+                mouseRect = new Rectangle(mousePosition.X - 25, mousePosition.Y - 25, 50, 50);
+                for (int i = 0; i < planetTextures.Count; i++)
+                {
+                    if (rects[i].Intersects(mouseRect)&&mouseState.LeftButton == ButtonState.Pressed&&prevMouseState.LeftButton == ButtonState.Released)
+                    {
+                        if (mouseTexture == hammerTex)
+                        {
+                            rects[i] = new Rectangle(rects[i].X+5, rects[i].Y+5, rects[i].Width-10, rects[i].Height-10);  
+                            if (rects[i].Width <= 0)
+                            {
+                                rects.RemoveAt(i);
+                                planetTextures.RemoveAt(i);
+                                opacities.RemoveAt(i);
+                                i--;
+                            }
+                        }
+                        else if (mouseTexture == laserTex)
+                        {
+                            opacities[i] = opacities[i] - 0.2f;
+                            if (opacities[i] <= 0)
+                            {
+                                rects.RemoveAt(i);
+                                planetTextures.RemoveAt(i);
+                                opacities.RemoveAt(i);
+                                i--;
+                            }
+                        }
+                        else if (mouseTexture == holeTex)
+                        {
+                            rects.RemoveAt(i);
+                            planetTextures.RemoveAt(i);
+                            opacities.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                }
             }
             else if (screen == Screen.outro)
             {
@@ -140,9 +183,9 @@ namespace Monogame_Part_2___Lists_and_Loops
             {
                 for (int i = 0; i < planetTextures.Count; i++)
                 {
-                    _spriteBatch.Draw(planetTextures[i], rects[i], Color.White);
+                    _spriteBatch.Draw(planetTextures[i], rects[i], Color.White * opacities[i]);
                 }
-                _spriteBatch.Draw(mouseTexture, new Rectangle(mousePosition.X-25,mousePosition.Y-25,50,50), Color.White);
+                _spriteBatch.Draw(mouseTexture, mouseRect, Color.White);
             }
             else if (screen == Screen.outro)
             {
