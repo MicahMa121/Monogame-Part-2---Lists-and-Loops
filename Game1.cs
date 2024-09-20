@@ -20,11 +20,12 @@ namespace Monogame_Part_2___Lists_and_Loops
         Random gen = new Random();
         Texture2D backgroundTexture;
         List<Texture2D> planetTextures;
+        List<Texture2D> queueTexture;
         List<Rectangle> rects;
         List<float> opacities;
         int width, height;  
         Screen screen;
-        SpriteFont spriteFont;
+        SpriteFont spriteFont, smallFont;
         KeyboardState keyboardState;
         KeyboardState prevKeyboardState;
         MouseState mouseState;
@@ -32,6 +33,8 @@ namespace Monogame_Part_2___Lists_and_Loops
         Texture2D mouseTexture,hammerTex,laserTex,holeTex;
         Point mousePosition;
         Rectangle mouseRect;
+        double gt;
+        int score;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -43,6 +46,7 @@ namespace Monogame_Part_2___Lists_and_Loops
             width = _graphics.PreferredBackBufferWidth;
             height = _graphics.PreferredBackBufferHeight;
             screen = Screen.intro;
+            score = 0;
         }
 
         protected override void Initialize()
@@ -56,7 +60,7 @@ namespace Monogame_Part_2___Lists_and_Loops
                 do
                 {
                     pass = true;
-                    int length = gen.Next(10,21) * 5;
+                    int length = gen.Next(10, 21) * 5;
                     rect = new Rectangle(gen.Next(width - length), gen.Next(height - length), length, length);
                     for (int j = 0; j < i; j++)
                     {
@@ -77,6 +81,7 @@ namespace Monogame_Part_2___Lists_and_Loops
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             backgroundTexture = Content.Load<Texture2D>("space_background");
             planetTextures = new List<Texture2D>();
+            queueTexture = new List<Texture2D>();
             opacities = new List<float>();
             for (int i = 1; i < 14; i++)
             {
@@ -88,6 +93,7 @@ namespace Monogame_Part_2___Lists_and_Loops
             hammerTex = Content.Load<Texture2D>("hammer");
             laserTex = Content.Load<Texture2D>("laser_gun");
             holeTex = Content.Load<Texture2D>("black_hole");
+            smallFont = Content.Load<SpriteFont>("spriteFontSmaller");
             // TODO: use this.Content to load your game content here
         }
 
@@ -111,7 +117,21 @@ namespace Monogame_Part_2___Lists_and_Loops
             }
             else if (screen == Screen.game)
             {
-                this.Window.Title = mouseState.ScrollWheelValue.ToString();
+                if (score >= 1000000)
+                {
+                    screen = Screen.outro;
+                }
+                gt += gameTime.ElapsedGameTime.TotalMilliseconds;
+                if (gt> gen.Next(1000,5000))
+                {
+                    gt = 0;
+                    if (queueTexture.Count > 0)
+                    {
+                        planetTextures.Add(queueTexture[0]);
+                        queueTexture.RemoveAt(0);   
+                    }
+                }
+                this.Window.Title = gt.ToString();
                 if (Math.Abs(mouseState.ScrollWheelValue%360) >= 0&& Math.Abs(mouseState.ScrollWheelValue % 360) <120)
                 {
                     mouseTexture = hammerTex;
@@ -136,9 +156,29 @@ namespace Monogame_Part_2___Lists_and_Loops
                             if (rects[i].Width <= 0)
                             {
                                 rects.RemoveAt(i);
+                                bool pass = true;
+                                Rectangle rect = new();
+                                do
+                                {
+                                    pass = true;
+                                    int length = gen.Next(10, 21) * 5;
+                                    rect = new Rectangle(gen.Next(width - length), gen.Next(height - length), length, length);
+                                    for (int j = 0; j < i; j++)
+                                    {
+                                        if (rect.Intersects(rects[j]))
+                                        {
+                                            pass = false;
+                                        }
+                                    }
+                                }
+                                while (!pass);
+                                rects.Add(rect);
+                                queueTexture.Add( planetTextures[i]);
                                 planetTextures.RemoveAt(i);
                                 opacities.RemoveAt(i);
+                                opacities.Add(1.0f);
                                 i--;
+                                score += gen.Next(1, 11) * 10000;
                             }
                         }
                         else if (mouseTexture == laserTex)
@@ -147,20 +187,61 @@ namespace Monogame_Part_2___Lists_and_Loops
                             if (opacities[i] <= 0)
                             {
                                 rects.RemoveAt(i);
+                                bool pass = true;
+                                Rectangle rect = new();
+                                do
+                                {
+                                    pass = true;
+                                    int length = gen.Next(10, 21) * 5;
+                                    rect = new Rectangle(gen.Next(width - length), gen.Next(height - length), length, length);
+                                    for (int j = 0; j < i; j++)
+                                    {
+                                        if (rect.Intersects(rects[j]))
+                                        {
+                                            pass = false;
+                                        }
+                                    }
+                                }
+                                while (!pass);
+                                rects.Add(rect);
+                                queueTexture.Add(planetTextures[i]);
                                 planetTextures.RemoveAt(i);
                                 opacities.RemoveAt(i);
+                                opacities.Add(1.0f);
                                 i--;
+                                score += gen.Next(1, 11) * 10000;
                             }
                         }
                         else if (mouseTexture == holeTex)
                         {
                             rects.RemoveAt(i);
+                            bool pass = true;
+                            Rectangle rect = new();
+                            do
+                            {
+                                pass = true;
+                                int length = gen.Next(10, 21) * 5;
+                                rect = new Rectangle(gen.Next(width - length), gen.Next(height - length), length, length);
+                                for (int j = 0; j < i; j++)
+                                {
+                                    if (rect.Intersects(rects[j]))
+                                    {
+                                        pass = false;
+                                    }
+                                }
+                                score += gen.Next(1, 11) * 10000;
+                            }
+                            while (!pass);
+                            rects.Add(rect);
+                            queueTexture.Add(planetTextures[i]);
                             planetTextures.RemoveAt(i);
                             opacities.RemoveAt(i);
+                            opacities.Add(1.0f);
                             i--;
                         }
                     }
                 }
+                
             }
             else if (screen == Screen.outro)
             {
@@ -186,9 +267,11 @@ namespace Monogame_Part_2___Lists_and_Loops
                     _spriteBatch.Draw(planetTextures[i], rects[i], Color.White * opacities[i]);
                 }
                 _spriteBatch.Draw(mouseTexture, mouseRect, Color.White);
+                _spriteBatch.DrawString(smallFont, "Score: " + score.ToString(), new Vector2(width / 5, height / 12) - spriteFont.MeasureString("Score: " + score.ToString()) / 2, Color.White);
             }
             else if (screen == Screen.outro)
             {
+                _spriteBatch.DrawString(spriteFont, "You Destroyed the Universe!", new Vector2(width / 2, height / 2) - spriteFont.MeasureString("You Destroyed the Universe!") / 2, Color.White);
             }
             _spriteBatch.End();
             base.Draw(gameTime);

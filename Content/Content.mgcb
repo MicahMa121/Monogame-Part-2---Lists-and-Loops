@@ -224,3 +224,10 @@
 /processorParam:TextureFormat=Compressed
 /build:SpriteFont.spritefont
 
+#begin spriteFontSmaller.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:spriteFontSmaller.spritefont
+
